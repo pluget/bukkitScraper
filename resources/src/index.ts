@@ -1,6 +1,6 @@
 import launchBrowsers from "./components/launchBrowsers";
 import fetchNumberOfPages from "./components/numberOfPages";
-import { writeJson } from "jsonfile";
+import { writeFile } from "jsonfile";
 import { resolve } from "path";
 
 async function main(filterSort = 5) {
@@ -32,6 +32,10 @@ async function main(filterSort = 5) {
       Object.assign(data, { [title]: url });
     }
   }
+  for (const i in pageArr) {
+    // close page
+    pageArr[i].close();
+  }
   return data;
 }
 
@@ -39,7 +43,7 @@ const dir = resolve(process.cwd(), "../../bukkitResources.json");
 
 main()
   .then((data) => {
-    writeJson(dir, data);
+    writeFile(dir, data);
   })
   .catch((err) => {
     console.log(err);
