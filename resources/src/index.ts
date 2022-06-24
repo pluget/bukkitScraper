@@ -39,7 +39,10 @@ async function main(filterSort = 5) {
   return data;
 }
 
-const dir = resolve(process.cwd(), "../../bukkitResources.json");
+const dir = resolve(
+  process.cwd(),
+  "../../scraperRepository/bukkitResources.json"
+);
 
 main()
   .then((data) => {
