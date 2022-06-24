@@ -30,7 +30,7 @@ export default async function launchBrowsers(
 
   for (let i = 0; i < numberOfBrowsers; i++) {
     const browser = await puppeteer.launch({
-      headless: false,
+      ...options,
       executablePath: CHROME_PATH,
     });
     browserArr.push(browser);
