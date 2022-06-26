@@ -15,44 +15,47 @@ interface Data {
 }
 
 async function main() {
-  const dir = resolve(
+  const dirPlugins = resolve(
     process.cwd(),
     "../../scraperRepository/bukkitResources.json"
   );
-  const plugins = await readFile(dir);
+  const plugins = await readFile(dirPlugins);
+
+  const dirIndexedPlugins = resolve(
+    process.cwd(),
+    "../../scraperRepository/bukkitResourcesData.json"
+  );
+  const indexedPlugins: Data[] = await readFile(dirIndexedPlugins);
 
   const numberOfBrowsers = 8;
   const pageArr = await launchBrowsers(numberOfBrowsers);
 
   const data: Data[] = [];
 
+  data.push(...indexedPlugins);
 
   let i = 0;
   const scrapers = new Array(numberOfBrowsers);
   for (const plugin in plugins) {
-    try {
-      scrapers[i % numberOfBrowsers] = scrapeInfo({ title: plugin, ...plugins[plugin] }, i, pageArr, numberOfBrowsers);
-    } catch (e) {
-      console.error(e);
-    }
-
-    if (i % numberOfBrowsers === numberOfBrowsers - 1) {
+    if (!indexedPlugins.find((x) => x.title === plugin)) {
       try {
-        await Promise.all(scrapers)
-      } catch (err) {
-        console.error(err)
+        scrapers[i % numberOfBrowsers] = scrapeInfo({ title: plugin, ...plugins[plugin] }, i, pageArr, numberOfBrowsers);
+      } catch (e) {
+        console.error(e);
       }
+
+      if (i % numberOfBrowsers === numberOfBrowsers - 1) {
+        try {
+          data.push(...await Promise.all(scrapers));
+          writeFile(dirIndexedPlugins, data);
+        } catch (err) {
+          console.error(err)
+        }
+      }
+      i++;
     }
-    i++;
   }
-  return data;
 }
 
-const dir = resolve(
-  process.cwd(),
-  "../../scraperRepository/bukkitResourcesData.json"
-);
-
 main()
-  .then((data) => writeFile(dir, data))
   .catch(console.error);
