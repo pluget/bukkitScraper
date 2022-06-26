@@ -19,7 +19,7 @@ async function main(filterSort = 5) {
     for (let i = 0; i < elements.length; i++) {
       const element = elements[i];
       const titleElement = await element.$(
-        "div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > a:nth-child(1)"
+        "div:nth-child(2) > div.info.name > div:nth-child(1) > a:nth-child(1)"
       );
       const title: string =
         titleElement !== null
@@ -29,7 +29,15 @@ async function main(filterSort = 5) {
         titleElement !== null
           ? await (await titleElement.getProperty("href")).jsonValue()
           : new URL("");
-      Object.assign(data, { [title]: url });
+      const descElement = await element.$(
+        "div:nth-child(2) > div.description > p:nth-child(1)"
+      );
+      const desc: string =
+        descElement !== null
+          ? await (await descElement.getProperty("textContent")).jsonValue()
+          : "";
+      Object.assign(data, { [title]: { url, desc } });
+      console.log(`${title} - ${desc}`);
     }
   }
   for (const i in pageArr) {
