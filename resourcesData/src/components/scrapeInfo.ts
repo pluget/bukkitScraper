@@ -3,6 +3,7 @@ import { Page } from "puppeteer";
 interface Data {
   title: string;
   url: URL;
+  iconUrl?: URL;
   desc: string;
   id: number;
   downloads: number;
@@ -11,9 +12,8 @@ interface Data {
   authors: string[];
 }
 
-const data: Data[] = []
-
 export default async function scrapeInfo(plugin: { title: string, url: URL, desc: string }, i: number, pageArr: Page[], numberOfBrowsers: number): Promise<Data[]> {
+  const data: Data[] = []
   const { title, url, desc }: { title: string, url: URL; desc: string } = plugin;
   const page = pageArr[i % numberOfBrowsers];
   await page.goto(url.toString());
@@ -21,9 +21,11 @@ export default async function scrapeInfo(plugin: { title: string, url: URL, desc
     ".e-project-details-secondary > .cf-sidebar-wrapper > .cf-sidebar-inner > ul.cf-details.project-details"
   );
   const authorsElementPromise = page.$$("ul.project-members > li.user-tag-large > .info-wrapper > p > a > span");
-  const [aboutSection, authorsElement] = await Promise.all([
+  const iconElementPromise = page.$("a.e-avatar64");
+  const [aboutSection, authorsElement, iconElement] = await Promise.all([
     aboutSectionPromise,
-    authorsElementPromise
+    authorsElementPromise,
+    iconElementPromise
   ]);
 
   const idElementPromise =
@@ -78,10 +80,11 @@ export default async function scrapeInfo(plugin: { title: string, url: URL, desc
   const source: URL | undefined =
     sourceElement !== null
       ? await (await sourceElement.getProperty("href")).jsonValue()
-      : undefined;
+      : undefined
+  const iconUrl: URL | undefined = iconElement !== null ? await (await iconElement.getProperty("href")).jsonValue() : undefined;
 
   // if .e-icon-alert is present, the plugin is depricated
-  const depricated = (await page.$(".e-icon-alert")) !== null;
+  const depricated = (await page.$(".e-icon-alert")) !== null
   const authors: string[] = []
 
   if (authorsElement !== null) {
@@ -90,10 +93,6 @@ export default async function scrapeInfo(plugin: { title: string, url: URL, desc
     }
   }
 
-  data.push({ title, url, desc, id, downloads, source, depricated, authors });
-  console.log(`${title} - ${id} - ${downloads}`);
-  console.log(`Depricated: ${depricated}`);
-  console.log(source);
-  console.log(authors);
+  data.push({ title, url, desc, id, downloads, source, depricated, authors, iconUrl })
   return data;
 }

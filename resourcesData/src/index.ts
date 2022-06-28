@@ -1,18 +1,8 @@
 import launchBrowsers from "./components/launchBrowsers";
 import scrapeInfo from "./components/scrapeInfo";
-import { readFile, writeFile } from "jsonfile";
+import { readFile } from "jsonfile";
 import { resolve } from "path";
-
-interface Data {
-  title: string;
-  url: URL;
-  desc: string;
-  id: number;
-  downloads: number;
-  source?: URL;
-  depricated: boolean;
-  authors: string[];
-}
+import { stringify } from "querystring";
 
 async function main() {
   const dirPlugins = resolve(
@@ -21,23 +11,16 @@ async function main() {
   );
   const plugins = await readFile(dirPlugins);
 
-  const dirIndexedPlugins = resolve(
-    process.cwd(),
-    "../../scraperRepository/bukkitResourcesData.json"
-  );
-  const indexedPlugins: Data[] = await readFile(dirIndexedPlugins);
+  const dirData = resolve(process.cwd(), "../../scraperRepository/bukkitResourcesData.json");
+  const data: { title: string }[] = await readFile(dirData);
 
   const numberOfBrowsers = 8;
   const pageArr = await launchBrowsers(numberOfBrowsers);
 
-  const data: Data[] = [];
-
-  data.push(...indexedPlugins);
-
   let i = 0;
   const scrapers = new Array(numberOfBrowsers);
   for (const plugin in plugins) {
-    if (!indexedPlugins.find((x) => x.title === plugin)) {
+    if (!data.find(d => d.title === plugin)) {
       try {
         scrapers[i % numberOfBrowsers] = scrapeInfo({ title: plugin, ...plugins[plugin] }, i, pageArr, numberOfBrowsers);
       } catch (e) {
@@ -46,8 +29,9 @@ async function main() {
 
       if (i % numberOfBrowsers === numberOfBrowsers - 1) {
         try {
-          data.push(...await Promise.all(scrapers));
-          writeFile(dirIndexedPlugins, data);
+          for (const scraperData of await Promise.all(scrapers)) {
+            console.log(JSON.stringify(scraperData[0]) + ",");
+          }
         } catch (err) {
           console.error(err)
         }
@@ -57,5 +41,9 @@ async function main() {
   }
 }
 
+console.log("[")
 main()
+  .then(() => {
+    console.log("]");
+  })
   .catch(console.error);
