@@ -2,7 +2,7 @@ import launchBrowsers from "./components/launchBrowsers";
 import scrapeInfo from "./components/scrapeInfo";
 import { readFile } from "jsonfile";
 import { resolve } from "path";
-import { stringify } from "querystring";
+import { Page } from "puppeteer";
 
 async function main() {
   const dirPlugins = resolve(
@@ -15,16 +15,20 @@ async function main() {
   const data: { title: string }[] = await readFile(dirData);
 
   const numberOfBrowsers = 8;
-  const pageArr = await launchBrowsers(numberOfBrowsers);
-
+  let pageArr: Page[] = [];
+  try {
+    pageArr = await launchBrowsers(numberOfBrowsers);
+  } catch (err) {
+    console.log(err);
+  }
   let i = 0;
   const scrapers = new Array(numberOfBrowsers);
   for (const plugin in plugins) {
     if (!data.find(d => d.title === plugin)) {
       try {
         scrapers[i % numberOfBrowsers] = scrapeInfo({ title: plugin, ...plugins[plugin] }, i, pageArr, numberOfBrowsers);
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.error(err);
       }
 
       if (i % numberOfBrowsers === numberOfBrowsers - 1) {

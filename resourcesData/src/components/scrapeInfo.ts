@@ -17,6 +17,7 @@ export default async function scrapeInfo(plugin: { title: string, url: URL, desc
   const { title, url, desc }: { title: string, url: URL; desc: string } = plugin;
   const page = pageArr[i % numberOfBrowsers];
   await page.goto(url.toString());
+  //await page.waitForSelector('.project-details');
   const aboutSectionPromise = page.$(
     ".e-project-details-secondary > .cf-sidebar-wrapper > .cf-sidebar-inner > ul.cf-details.project-details"
   );
